@@ -29,6 +29,63 @@ const requestController = {
       next(error);
     }
   },
+
+  async update(req, res, next) {
+    try {
+      const { id, method, url, headers, body } = req.body;
+
+      if (!id) {
+        return res.status(400).json({ message: 'Request ID is required' });
+      }
+
+      if (!method || !url) {
+        return res.status(400).json({ message: 'Method and URL are required' });
+      }
+
+      let parsedHeaders = headers || {};
+      if (typeof headers === 'string' && headers.trim()) {
+        try {
+          parsedHeaders = JSON.parse(headers);
+        } catch {
+          return res.status(400).json({ message: 'Headers must be valid JSON' });
+        }
+      }
+
+      let parsedBody = body || null;
+      if (typeof body === 'string' && body.trim()) {
+        try {
+          parsedBody = JSON.parse(body);
+        } catch {
+          return res.status(400).json({ message: 'Body must be valid JSON' });
+        }
+      }
+
+      const result = await requestService.updateRequest(req.user.id, id, {
+        method,
+        url,
+        headers: parsedHeaders,
+        body: parsedBody,
+      });
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async remove(req, res, next) {
+    try {
+      const { id } = req.body;
+
+      if (!id) {
+        return res.status(400).json({ message: 'Request ID is required' });
+      }
+
+      const result = await requestService.deleteRequest(req.user.id, id);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 module.exports = requestController;

@@ -56,6 +56,30 @@ const requestService = {
   async getHistory(userId) {
     return ApiRequest.findByUserId(userId);
   },
+
+  async updateRequest(userId, requestId, { method, url, headers, body }) {
+    const existing = await ApiRequest.findById(requestId, userId);
+    if (!existing) {
+      const error = new Error('Request not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const updated = await ApiRequest.update(requestId, userId, { method, url, headers, body });
+    return updated;
+  },
+
+  async deleteRequest(userId, requestId) {
+    const existing = await ApiRequest.findById(requestId, userId);
+    if (!existing) {
+      const error = new Error('Request not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    await ApiRequest.deleteById(requestId, userId);
+    return { message: 'Request deleted successfully' };
+  },
 };
 
 module.exports = requestService;
