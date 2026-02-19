@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/mohit/static/css/main.3982bb5f.css",
+    "main.js": "/mohit/static/js/main.63b6085e.js",
+    "index.html": "/mohit/index.html",
+    "main.3982bb5f.css.map": "/mohit/static/css/main.3982bb5f.css.map",
+    "main.63b6085e.js.map": "/mohit/static/js/main.63b6085e.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.3982bb5f.css",
+    "static/js/main.63b6085e.js"
+  ]
+}
