@@ -8,6 +8,7 @@ import Register from './pages/Register';
 import RequestBuilder from './pages/RequestBuilder';
 import History from './pages/History';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();

@@ -26,6 +26,25 @@ const ApiRequest = {
     );
     return result.rows[0];
   },
+
+  async update(id, userId, { method, url, headers, body }) {
+    const result = await pool.query(
+      `UPDATE api_requests
+       SET method = $1, url = $2, headers = $3, body = $4
+       WHERE id = $5 AND user_id = $6
+       RETURNING *`,
+      [method, url, JSON.stringify(headers), body ? JSON.stringify(body) : null, id, userId]
+    );
+    return result.rows[0];
+  },
+
+  async deleteById(id, userId) {
+    const result = await pool.query(
+      'DELETE FROM api_requests WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, userId]
+    );
+    return result.rows[0];
+  },
 };
 
 module.exports = ApiRequest;
