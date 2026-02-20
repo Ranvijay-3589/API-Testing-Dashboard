@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 const getStatusBadgeClass = (code) => {
   if (!code || code === 0) return 'bg-secondary';
@@ -45,6 +45,44 @@ const isXml = (data) => {
   return trimmed.startsWith('<') && trimmed.endsWith('>');
 };
 
+const URL_REGEX = /https?:\/\/[^\s"'`,<>}\])+]+(?:[)\]](?=[^\w]|$))?/g;
+
+const renderTextWithLinks = (text) => {
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+
+  URL_REGEX.lastIndex = 0;
+  while ((match = URL_REGEX.exec(text)) !== null) {
+    const url = match[0];
+    const startIdx = match.index;
+
+    if (startIdx > lastIndex) {
+      parts.push(text.slice(lastIndex, startIdx));
+    }
+
+    parts.push(
+      <a
+        key={startIdx}
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ color: '#58a6ff', textDecoration: 'underline', wordBreak: 'break-all' }}
+      >
+        {url}
+      </a>
+    );
+
+    lastIndex = startIdx + url.length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : text;
+};
+
 const ResponseViewer = ({ response }) => {
   if (!response) return null;
 
@@ -72,6 +110,7 @@ const ResponseViewer = ({ response }) => {
   };
 
   const { text, type } = formatResponse(response.response_data);
+  const linkedContent = useMemo(() => renderTextWithLinks(text), [text]);
 
   const getTypeLabel = () => {
     if (type === 'xml') return 'XML';
@@ -100,7 +139,7 @@ const ResponseViewer = ({ response }) => {
           className="bg-dark text-light p-3 rounded"
           style={{ maxHeight: '500px', overflow: 'auto', fontSize: '0.875rem' }}
         >
-          {text}
+          {linkedContent}
         </pre>
       </div>
     </div>
