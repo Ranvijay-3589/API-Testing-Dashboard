@@ -21,6 +21,7 @@ const App = () => {
     <AuthProvider>
       <Router basename="/mohit">
         <div className="min-vh-100 bg-light">
+          <div className="bg-primary text-white text-center py-2">Hello</div>
           <Navbar />
           <Routes>
             <Route
