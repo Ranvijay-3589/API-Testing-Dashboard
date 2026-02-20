@@ -21,6 +21,20 @@ const getStatusBadge = (code) => {
   return 'bg-danger';
 };
 
+const detectContentType = (headers) => {
+  if (!headers || typeof headers !== 'object') return 'application/json';
+  const ct = headers['Content-Type'] || headers['content-type'] || '';
+  if (ct.includes('xml')) return 'application/xml';
+  if (ct.includes('text/plain')) return 'text/plain';
+  return 'application/json';
+};
+
+const formatBodyForDisplay = (body) => {
+  if (body == null) return '';
+  if (typeof body === 'string') return body;
+  return JSON.stringify(body, null, 2);
+};
+
 const History = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,6 +45,7 @@ const History = () => {
   // Edit modal state
   const [editItem, setEditItem] = useState(null);
   const [editForm, setEditForm] = useState({ method: 'GET', url: '', headers: '', body: '' });
+  const [editContentType, setEditContentType] = useState('application/json');
   const [editLoading, setEditLoading] = useState(false);
 
   // Delete confirm state
@@ -44,7 +59,7 @@ const History = () => {
   const fetchHistory = async () => {
     try {
       const res = await api.get('/request/history');
-      setRequests(res.data);
+      setRequests(res.data.items || res.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch history');
     } finally {
@@ -71,12 +86,20 @@ const History = () => {
 
   // --- Edit handlers ---
   const openEditModal = (item) => {
+    const ct = detectContentType(item.headers);
     setEditItem(item);
+    setEditContentType(ct);
+
+    // Filter out Content-Type from headers for display
+    const filteredHeaders = { ...(item.headers || {}) };
+    delete filteredHeaders['Content-Type'];
+    delete filteredHeaders['content-type'];
+
     setEditForm({
       method: item.method,
       url: item.url,
-      headers: item.headers ? JSON.stringify(item.headers, null, 2) : '',
-      body: item.body ? JSON.stringify(item.body, null, 2) : '',
+      headers: Object.keys(filteredHeaders).length > 0 ? JSON.stringify(filteredHeaders, null, 2) : '',
+      body: formatBodyForDisplay(item.body),
     });
     setError('');
     setSuccessMsg('');
@@ -85,6 +108,7 @@ const History = () => {
   const closeEditModal = () => {
     setEditItem(null);
     setEditForm({ method: 'GET', url: '', headers: '', body: '' });
+    setEditContentType('application/json');
   };
 
   const handleEditChange = (e) => {
@@ -95,12 +119,27 @@ const History = () => {
     e.preventDefault();
     setEditLoading(true);
     setError('');
+
+    // Merge Content-Type into headers
+    let headersToSend = editForm.headers;
+    try {
+      const parsed = editForm.headers.trim() ? JSON.parse(editForm.headers) : {};
+      if (['POST', 'PUT', 'PATCH'].includes(editForm.method)) {
+        parsed['Content-Type'] = editContentType;
+      }
+      headersToSend = JSON.stringify(parsed);
+    } catch {
+      setError('Headers must be valid JSON');
+      setEditLoading(false);
+      return;
+    }
+
     try {
       await api.post('/request/history/update', {
         id: editItem.id,
         method: editForm.method,
         url: editForm.url,
-        headers: editForm.headers,
+        headers: headersToSend,
         body: editForm.body,
       });
       setSuccessMsg('Request updated successfully');
@@ -157,6 +196,18 @@ const History = () => {
       </div>
     );
   }
+
+  const getBodyPlaceholder = () => {
+    if (editContentType === 'application/xml') return '<?xml version="1.0"?>\n<root>...</root>';
+    if (editContentType === 'text/plain') return 'Enter plain text body...';
+    return '{"key": "value"}';
+  };
+
+  const getBodyLabel = () => {
+    if (editContentType === 'application/xml') return 'Body (XML)';
+    if (editContentType === 'text/plain') return 'Body (Text)';
+    return 'Body (JSON)';
+  };
 
   return (
     <div className="container mt-4">
@@ -271,6 +322,37 @@ const History = () => {
                       />
                     </div>
                   </div>
+
+                  {/* Content-Type selector in edit modal */}
+                  {['POST', 'PUT', 'PATCH'].includes(editForm.method) && (
+                    <div className="mb-3">
+                      <label className="form-label fw-semibold me-3">Content-Type:</label>
+                      <div className="btn-group" role="group">
+                        {[
+                          { value: 'application/json', label: 'JSON' },
+                          { value: 'application/xml', label: 'XML' },
+                          { value: 'text/plain', label: 'Text' },
+                        ].map((ct) => (
+                          <React.Fragment key={ct.value}>
+                            <input
+                              type="radio"
+                              className="btn-check"
+                              name="editContentType"
+                              id={`edit-ct-${ct.value}`}
+                              value={ct.value}
+                              checked={editContentType === ct.value}
+                              onChange={(e) => setEditContentType(e.target.value)}
+                            />
+                            <label className="btn btn-outline-secondary btn-sm" htmlFor={`edit-ct-${ct.value}`}>
+                              {ct.label}
+                            </label>
+                          </React.Fragment>
+                        ))}
+                      </div>
+                      <small className="text-muted ms-2">{editContentType}</small>
+                    </div>
+                  )}
+
                   <div className="mb-3">
                     <label className="form-label">Headers (JSON)</label>
                     <textarea
@@ -279,18 +361,18 @@ const History = () => {
                       rows="3"
                       value={editForm.headers}
                       onChange={handleEditChange}
-                      placeholder='{"Content-Type": "application/json"}'
+                      placeholder='{"Authorization": "Bearer token"}'
                     />
                   </div>
                   <div className="mb-3">
-                    <label className="form-label">Body (JSON)</label>
+                    <label className="form-label">{getBodyLabel()}</label>
                     <textarea
                       className="form-control font-monospace"
                       name="body"
                       rows="4"
                       value={editForm.body}
                       onChange={handleEditChange}
-                      placeholder='{"key": "value"}'
+                      placeholder={getBodyPlaceholder()}
                     />
                   </div>
                 </div>

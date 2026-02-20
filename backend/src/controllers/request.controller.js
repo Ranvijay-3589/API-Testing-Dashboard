@@ -1,6 +1,15 @@
 const requestService = require('../services/request.service');
 const { parseJsonInput, validateRequestPayload } = require('../utils/validators');
 
+function getContentType(headers) {
+  if (!headers || typeof headers !== 'object') return '';
+  return (headers['Content-Type'] || headers['content-type'] || '').toLowerCase();
+}
+
+function isRawContentType(contentType) {
+  return contentType.includes('xml') || contentType.includes('text/plain');
+}
+
 async function sendRequest(req, res, next) {
   try {
     const { errors, method } = validateRequestPayload(req.body);
@@ -9,7 +18,16 @@ async function sendRequest(req, res, next) {
     }
 
     const headers = parseJsonInput(req.body.headers, 'headers') || {};
-    const body = parseJsonInput(req.body.body, 'body');
+    const contentType = getContentType(headers);
+
+    let body;
+    if (isRawContentType(contentType)) {
+      // XML or plain text: keep body as raw string
+      body = req.body.body != null ? String(req.body.body) : null;
+    } else {
+      // JSON or other: parse as JSON
+      body = parseJsonInput(req.body.body, 'body');
+    }
 
     const result = await requestService.executeAndSaveRequest({
       userId: req.user.id,
@@ -46,7 +64,14 @@ async function updateHistory(req, res, next) {
     }
 
     const parsedHeaders = parseJsonInput(headers, 'headers') || {};
-    const parsedBody = parseJsonInput(body, 'body');
+    const contentType = getContentType(parsedHeaders);
+
+    let parsedBody;
+    if (isRawContentType(contentType)) {
+      parsedBody = body != null ? String(body) : null;
+    } else {
+      parsedBody = parseJsonInput(body, 'body');
+    }
 
     const updated = await requestService.updateRequest(id, req.user.id, {
       method: method.toUpperCase(),
