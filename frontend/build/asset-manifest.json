@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/mohit/static/css/main.4858d7a4.css",
-    "main.js": "/mohit/static/js/main.fad9ecac.js",
+    "main.js": "/mohit/static/js/main.e9ff9bca.js",
     "static/media/bootstrap-icons.woff?": "/mohit/static/media/bootstrap-icons.1295669cd4e305c97f2c.woff",
     "static/media/bootstrap-icons.woff2?": "/mohit/static/media/bootstrap-icons.92ea18a81d737146ff04.woff2",
     "index.html": "/mohit/index.html",
     "main.4858d7a4.css.map": "/mohit/static/css/main.4858d7a4.css.map",
-    "main.fad9ecac.js.map": "/mohit/static/js/main.fad9ecac.js.map"
+    "main.e9ff9bca.js.map": "/mohit/static/js/main.e9ff9bca.js.map"
   },
   "entrypoints": [
     "static/css/main.4858d7a4.css",
-    "static/js/main.fad9ecac.js"
+    "static/js/main.e9ff9bca.js"
   ]
 }
