@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 
 const getStatusBadgeClass = (code) => {
   if (!code || code === 0) return 'bg-secondary';
@@ -83,11 +83,22 @@ const renderTextWithLinks = (text) => {
   return parts.length > 0 ? parts : text;
 };
 
-const ResponseViewer = ({ response }) => {
-  if (!response) return null;
+const getFileExtension = (type) => {
+  if (type === 'json') return 'json';
+  if (type === 'xml') return 'xml';
+  return 'txt';
+};
 
-  const formatResponse = (data) => {
-    // Try JSON first
+const getMimeType = (type) => {
+  if (type === 'json') return 'application/json';
+  if (type === 'xml') return 'application/xml';
+  return 'text/plain';
+};
+
+const ResponseViewer = ({ response }) => {
+  const [copied, setCopied] = useState(false);
+
+  const formatResponse = useCallback((data) => {
     try {
       if (typeof data === 'string') {
         const parsed = JSON.parse(data);
@@ -100,17 +111,55 @@ const ResponseViewer = ({ response }) => {
       // Not JSON
     }
 
-    // Check if XML
     if (isXml(data)) {
       return { text: formatXml(data), type: 'xml' };
     }
 
-    // Fallback to string
     return { text: String(data), type: 'text' };
-  };
+  }, []);
 
-  const { text, type } = formatResponse(response.response_data);
+  const { text, type } = useMemo(
+    () => (response ? formatResponse(response.response_data) : { text: '', type: 'text' }),
+    [response, formatResponse]
+  );
+
   const linkedContent = useMemo(() => renderTextWithLinks(text), [text]);
+
+  const handleDownload = useCallback(() => {
+    const ext = getFileExtension(type);
+    const mime = getMimeType(type);
+    const blob = new Blob([text], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `response-${Date.now()}.${ext}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [text, type]);
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [text]);
+
+  if (!response) return null;
 
   const getTypeLabel = () => {
     if (type === 'xml') return 'XML';
@@ -120,9 +169,9 @@ const ResponseViewer = ({ response }) => {
 
   return (
     <div className="card mt-4">
-      <div className="card-header d-flex justify-content-between align-items-center">
+      <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <h5 className="mb-0">Response</h5>
-        <div className="d-flex gap-3 align-items-center">
+        <div className="d-flex gap-2 align-items-center flex-wrap">
           <span className="badge bg-secondary">
             {getTypeLabel()}
           </span>
@@ -132,6 +181,24 @@ const ResponseViewer = ({ response }) => {
           <span className="badge bg-primary">
             Time: {response.response_time_ms}ms
           </span>
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-light"
+            onClick={handleCopy}
+            title="Copy response to clipboard"
+          >
+            <i className={`bi ${copied ? 'bi-check-lg' : 'bi-clipboard'}`}></i>
+            {copied ? ' Copied!' : ' Copy'}
+          </button>
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-light"
+            onClick={handleDownload}
+            title={`Download as .${getFileExtension(type)} file`}
+          >
+            <i className="bi bi-download"></i>
+            {' Download'}
+          </button>
         </div>
       </div>
       <div className="card-body">
