@@ -174,7 +174,8 @@ const ResponseViewer = ({ response }) => {
     setSwaggerError('');
     setSwaggerLoading(true);
     try {
-      const res = await fetch('/api/openapi.json');
+      const apiBase = process.env.REACT_APP_API_BASE_URL || '/mohit/api';
+      const res = await fetch(`${apiBase}/openapi.json`);
       if (!res.ok) {
         throw new Error(`Failed to load OpenAPI JSON (${res.status})`);
       }
@@ -269,7 +270,7 @@ const ResponseViewer = ({ response }) => {
 
         {activeView === 'swaggerUi' && (
           <div className="bg-white rounded border p-2" style={{ maxHeight: '700px', overflow: 'auto' }}>
-            <SwaggerUI url="/api/openapi.json" />
+            <SwaggerUI url={`${process.env.REACT_APP_API_BASE_URL || '/mohit/api'}/openapi.json`} />
           </div>
         )}
 
