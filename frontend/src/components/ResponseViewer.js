@@ -174,7 +174,7 @@ const ResponseViewer = ({ response }) => {
     setSwaggerError('');
     setSwaggerLoading(true);
     try {
-      const res = await fetch('/openapi.json');
+      const res = await fetch('/api/openapi.json');
       if (!res.ok) {
         throw new Error(`Failed to load OpenAPI JSON (${res.status})`);
       }
@@ -269,7 +269,7 @@ const ResponseViewer = ({ response }) => {
 
         {activeView === 'swaggerUi' && (
           <div className="bg-white rounded border p-2" style={{ maxHeight: '700px', overflow: 'auto' }}>
-            <SwaggerUI url="/openapi.json" />
+            <SwaggerUI url="/api/openapi.json" />
           </div>
         )}
 
