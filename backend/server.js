@@ -27,7 +27,7 @@ app.get('/api/openapi.json', (req, res) => {
       description: 'Simplified Postman alternative for sending HTTP requests and viewing responses.',
       version: '1.0.0',
     },
-    servers: [{ url: '/api', description: 'API Server' }],
+    servers: [{ url: 'https://ranvijay.capricorn.online/mohit/api', description: 'Production API Server' }],
     components: {
       securitySchemes: {
         BearerAuth: {
