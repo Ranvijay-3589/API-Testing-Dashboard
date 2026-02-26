@@ -39,6 +39,16 @@ const Navbar = () => {
                     History
                   </Link>
                 </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/swagger">
+                    Swagger UI
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/swagger?tab=doc">
+                    Swagger Doc
+                  </Link>
+                </li>
               </ul>
               <div className="d-flex align-items-center">
                 <span className="text-light me-3">{user.name}</span>

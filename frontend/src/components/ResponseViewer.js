@@ -1,6 +1,4 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import SwaggerUI from 'swagger-ui-react';
-import 'swagger-ui-react/swagger-ui.css';
 
 const getStatusBadgeClass = (code) => {
   if (!code || code === 0) return 'bg-secondary';
@@ -99,10 +97,6 @@ const getMimeType = (type) => {
 
 const ResponseViewer = ({ response }) => {
   const [copied, setCopied] = useState(false);
-  const [activeView, setActiveView] = useState('response');
-  const [swaggerDoc, setSwaggerDoc] = useState('');
-  const [swaggerLoading, setSwaggerLoading] = useState(false);
-  const [swaggerError, setSwaggerError] = useState('');
 
   const formatResponse = useCallback((data) => {
     try {
@@ -151,7 +145,6 @@ const ResponseViewer = ({ response }) => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback for older browsers
       const textarea = document.createElement('textarea');
       textarea.value = text;
       textarea.style.position = 'fixed';
@@ -164,29 +157,6 @@ const ResponseViewer = ({ response }) => {
       setTimeout(() => setCopied(false), 2000);
     }
   }, [text]);
-
-  const handleSwaggerDocView = useCallback(async () => {
-    setActiveView('swaggerDoc');
-    if (swaggerDoc || swaggerLoading) {
-      return;
-    }
-
-    setSwaggerError('');
-    setSwaggerLoading(true);
-    try {
-      const apiBase = process.env.REACT_APP_API_BASE_URL || '/mohit/api';
-      const res = await fetch(`${apiBase}/openapi.json`);
-      if (!res.ok) {
-        throw new Error(`Failed to load OpenAPI JSON (${res.status})`);
-      }
-      const data = await res.json();
-      setSwaggerDoc(JSON.stringify(data, null, 2));
-    } catch (error) {
-      setSwaggerError(error.message || 'Failed to load OpenAPI JSON');
-    } finally {
-      setSwaggerLoading(false);
-    }
-  }, [swaggerDoc, swaggerLoading]);
 
   if (!response) return null;
 
@@ -201,93 +171,42 @@ const ResponseViewer = ({ response }) => {
       <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <h5 className="mb-0">Response</h5>
         <div className="d-flex gap-2 align-items-center flex-wrap">
-          {activeView === 'response' && (
-            <>
-              <span className="badge bg-secondary">
-                {getTypeLabel()}
-              </span>
-              <span className={`badge ${getStatusBadgeClass(response.status_code)}`}>
-                Status: {response.status_code || 'Error'}
-              </span>
-              <span className="badge bg-primary">
-                Time: {response.response_time_ms}ms
-              </span>
-              <button
-                type="button"
-                className="btn btn-sm btn-outline-light"
-                onClick={handleCopy}
-                title="Copy response to clipboard"
-              >
-                <i className={`bi ${copied ? 'bi-check-lg' : 'bi-clipboard'}`}></i>
-                {copied ? ' Copied!' : ' Copy'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-sm btn-outline-light"
-                onClick={handleDownload}
-                title={`Download as .${getFileExtension(type)} file`}
-              >
-                <i className="bi bi-download"></i>
-                {' Download'}
-              </button>
-            </>
-          )}
+          <span className="badge bg-secondary">
+            {getTypeLabel()}
+          </span>
+          <span className={`badge ${getStatusBadgeClass(response.status_code)}`}>
+            Status: {response.status_code || 'Error'}
+          </span>
+          <span className="badge bg-primary">
+            Time: {response.response_time_ms}ms
+          </span>
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-light"
+            onClick={handleCopy}
+            title="Copy response to clipboard"
+          >
+            <i className={`bi ${copied ? 'bi-check-lg' : 'bi-clipboard'}`}></i>
+            {copied ? ' Copied!' : ' Copy'}
+          </button>
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-light"
+            onClick={handleDownload}
+            title={`Download as .${getFileExtension(type)} file`}
+          >
+            <i className="bi bi-download"></i>
+            {' Download'}
+          </button>
         </div>
       </div>
       <div className="card-body">
-        <div className="d-flex gap-2 mb-3 flex-wrap">
-          <button
-            type="button"
-            className={`btn btn-sm ${activeView === 'response' ? 'btn-primary' : 'btn-outline-primary'}`}
-            onClick={() => setActiveView('response')}
-          >
-            Response JSON
-          </button>
-          <button
-            type="button"
-            className={`btn btn-sm ${activeView === 'swaggerUi' ? 'btn-primary' : 'btn-outline-primary'}`}
-            onClick={() => setActiveView('swaggerUi')}
-          >
-            Swagger UI
-          </button>
-          <button
-            type="button"
-            className={`btn btn-sm ${activeView === 'swaggerDoc' ? 'btn-primary' : 'btn-outline-primary'}`}
-            onClick={handleSwaggerDocView}
-          >
-            Swagger Doc
-          </button>
-        </div>
-
-        {activeView === 'response' && (
-          <pre
-            className="bg-dark text-light p-3 rounded"
-            style={{ maxHeight: '500px', overflow: 'auto', fontSize: '0.875rem' }}
-          >
-            {linkedContent}
-          </pre>
-        )}
-
-        {activeView === 'swaggerUi' && (
-          <div className="bg-white rounded border p-2" style={{ maxHeight: '700px', overflow: 'auto' }}>
-            <SwaggerUI url={`${process.env.REACT_APP_API_BASE_URL || '/mohit/api'}/openapi.json`} />
-          </div>
-        )}
-
-        {activeView === 'swaggerDoc' && (
-          <>
-            {swaggerLoading && <p className="mb-0 text-muted">Loading OpenAPI JSON...</p>}
-            {swaggerError && <div className="alert alert-danger mb-0">{swaggerError}</div>}
-            {!swaggerLoading && !swaggerError && (
-              <pre
-                className="bg-dark text-light p-3 rounded"
-                style={{ maxHeight: '500px', overflow: 'auto', fontSize: '0.875rem' }}
-              >
-                {swaggerDoc}
-              </pre>
-            )}
-          </>
-        )}
+        <pre
+          className="bg-dark text-light p-3 rounded"
+          style={{ maxHeight: '500px', overflow: 'auto', fontSize: '0.875rem' }}
+        >
+          {linkedContent}
+        </pre>
       </div>
     </div>
   );
