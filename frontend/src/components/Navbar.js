@@ -49,6 +49,11 @@ const Navbar = () => {
                     Swagger Doc
                   </Link>
                 </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/about-us">
+                    About Us
+                  </Link>
+                </li>
               </ul>
               <div className="d-flex align-items-center">
                 <span className="text-light me-3">{user.name}</span>
