@@ -8,7 +8,6 @@ import Register from './pages/Register';
 import RequestBuilder from './pages/RequestBuilder';
 import History from './pages/History';
 import SwaggerPage from './pages/SwaggerPage';
-import AboutUs from './pages/AboutUs';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -65,7 +64,6 @@ const App = () => {
                 </PrivateRoute>
               }
             />
-            <Route path="/about-us" element={<AboutUs />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </div>
